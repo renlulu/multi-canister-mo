@@ -25,7 +25,7 @@ shared(msg) actor class () = self {
 
     var signers : [Principal] = [];
 
-    func sumbit(signer_index : Nat, transaction_type : TransactionType, arg: Principal) {
+    public func sumbit(signer_index : Nat, transaction_type : TransactionType, arg: Principal) {
         if (signers[signer_index] != msg.caller) {
         } else {
             transactions.put(transaction_index, (transaction_type, arg));
@@ -33,7 +33,7 @@ shared(msg) actor class () = self {
         }
     };
 
-    func sign(signer_index : Nat, transaction_id : Nat) {
+    public func sign(signer_index : Nat, transaction_id : Nat) {
         if (signers[signer_index] != msg.caller) {
         } else {
             let signed_number = signatures.get(transaction_id);
@@ -49,7 +49,7 @@ shared(msg) actor class () = self {
         }
     };
 
-    func execute(transaction_id : Nat) : async IC.canister_id {
+    public func execute(transaction_id : Nat) : async IC.canister_id {
         let signed_number = signatures.get(transaction_id);
         switch (signed_number) {
           case (null) {
