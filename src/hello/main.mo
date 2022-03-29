@@ -4,8 +4,9 @@ import Option "mo:base/Option";
 import H "mo:base/HashMap";
 import Hash "mo:base/Hash";
 import Debug "mo:base/Debug";
+import Array "mo:base/Array";
 
-shared(msg) actor class () = self {
+shared(msg) actor class (init_total_signer : Nat, init_quorum_number : Nat, init_signers : [Principal]) = self {
 
     let eq: (Nat, Nat) -> Bool = func(x, y) { x == y };
 
@@ -13,9 +14,17 @@ shared(msg) actor class () = self {
 
     type TransactionType = { #create_canister; #start_canister; #stop_canister; #delete_canister };
 
-    var total_signer : Nat = 5;
+    public type Proposal = {
+        proposal_type : TransactionType;
+        canister_id : Principal;
+        commited_signer : [Principal];
+        vote_yes : [Principal];
+        vote_no : [Principal];
+    };
 
-    var quorum_number : Nat = 3;
+    var total_signer : Nat = init_total_signer;
+
+    var quorum_number : Nat = init_quorum_number;
 
     var transactions : H.HashMap<Nat, (TransactionType, Principal)> = H.HashMap<Nat, (TransactionType, Principal)>(100, eq, Hash.hash);
 
@@ -23,7 +32,28 @@ shared(msg) actor class () = self {
 
     var signatures : H.HashMap<Nat, Nat> = H.HashMap<Nat, Nat>(100, eq, Hash.hash);
 
-    var signers : [Principal] = [];
+    var signers : [Principal] = init_signers;
+
+    var proposals : [Proposal] = [];
+
+
+    public func propose(cid : Principal, ptype : TransactionType) {
+        let commited_signer : [Principal] = [msg.caller];
+        let vyes : [Principal] = [msg.caller];
+        let vno : [Principal] = [];
+        let proposal : Proposal = {proposal_type = ptype; canister_id = cid; commited_signer = commited_signer; vote_yes = vyes; vote_no = vno};
+        let res = Array.append<Proposal>(proposals, [proposal]);
+    };
+
+    public func vote_yes(proposal_id : Nat) {
+        // todo tell if he voted already
+        let res = Array.append<Principal>( proposals[proposal_id].vote_yes, [msg.caller]);
+    };
+
+    public func vote_no(proposal_id : Nat) {
+        // todo tell if he voted already
+        let res = Array.append<Principal>( proposals[proposal_id].vote_no, [msg.caller]);
+    };
 
     public func sumbit(signer_index : Nat, transaction_type : TransactionType, arg: Principal) {
         if (signers[signer_index] != msg.caller) {
